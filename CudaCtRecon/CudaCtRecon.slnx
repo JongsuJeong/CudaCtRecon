@@ -1,0 +1,8 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Project Path="../CppCudaEngine/CppCudaEngine.vcxproj" />
+  <Project Path="CudaCtRecon.csproj" />
+</Solution>
