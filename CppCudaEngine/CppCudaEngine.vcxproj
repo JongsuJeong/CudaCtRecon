@@ -42,10 +42,10 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)CsharpApp\bin\$(Configuration)\$(TargetFramework)\</OutDir>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\net10.0-windows\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)CsharpApp\bin\$(Configuration)\$(TargetFramework)\</OutDir>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\net10.0-windows\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
