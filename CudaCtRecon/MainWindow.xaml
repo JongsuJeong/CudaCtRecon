@@ -6,7 +6,36 @@
         xmlns:local="clr-namespace:CudaCtRecon"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Margin="10">
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="CT Sinogram Filtering Pipeline (Day 2)" FontSize="18" FontWeight="Bold" Margin="0,0,0,15" HorizontalAlignment="Center"/>
 
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <StackPanel Margin="10">
+                    <TextBlock Text="1. Original Sinogram" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <Border BorderBrush="Gray" BorderThickness="1">
+                        <Image x:Name="Image_Original" Width="300" Height="300" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock Text="▶" FontSize="30" Foreground="Gray" VerticalAlignment="Center" Margin="5,0"/>
+
+                <StackPanel Margin="10">
+                    <TextBlock Text="2. Ram-Lak Filter (Ramp)" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <Border BorderBrush="Gray" BorderThickness="1">
+                        <Image x:Name="Image_Filter" Width="300" Height="10" Stretch="Fill" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    </Border>
+                </StackPanel>
+
+                <TextBlock Text="▶" FontSize="30" Foreground="Gray" VerticalAlignment="Center" Margin="5,0"/>
+
+                <StackPanel Margin="10">
+                    <TextBlock Text="3. Filtered Sinogram" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,5"/>
+                    <Border BorderBrush="Gray" BorderThickness="1">
+                        <Image x:Name="Image_Filtered" Width="300" Height="300" Stretch="Uniform" RenderOptions.BitmapScalingMode="NearestNeighbor"/>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>

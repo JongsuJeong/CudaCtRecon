@@ -4,5 +4,7 @@
     <Platform Name="x64" />
   </Configurations>
   <Project Path="../CppCudaEngine/CppCudaEngine.vcxproj" />
-  <Project Path="CudaCtRecon.csproj" />
+  <Project Path="CudaCtRecon.csproj">
+    <BuildDependency Project="../CppCudaEngine/CppCudaEngine.vcxproj" />
+  </Project>
 </Solution>
