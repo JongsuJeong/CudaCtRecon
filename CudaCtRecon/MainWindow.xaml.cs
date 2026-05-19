@@ -73,12 +73,12 @@ namespace CudaCtRecon
                 ProcessSinogram(sinogramData, width, height);
 
                 // 5. 호출 후 값이 정말로 C++에서 바꾼 대로 변경되었는지 확인
-                float modifiedValue = sinogramData[centerIndex];
+                float filteredValue = sinogramData[centerIndex];
 
-                MessageBox.Show($"[통신 성공!]\n\n" +
-                                $"C#에서 보낸 처음 값: {originalValue}\n" +
-                                $"CUDA DLL 통과 후 값: {modifiedValue}\n\n" +
-                                $"정확히 2배가 되었다면 대용량 메모리가 1도 깨지지 않고 완전히 연동된 것입니다!");
+                MessageBox.Show($"[Day 2 필터링 처리 완료]\n\n" +
+                $"원래 중앙값: {originalValue}\n" +
+                $"필터 통과 후 값: {filteredValue}\n\n" +
+                $"값이 엣지 성분 보정으로 인해 주파수 도메인 연산이 적용되었다면 정상입니다!");
             }
             catch (Exception ex)
             {
