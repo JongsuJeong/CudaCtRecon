@@ -6,6 +6,34 @@
 
 #define PI 3.14159265358979323846f
 
+
+// 2D 투영 데이터에서 선형 보간을 수행하는 디바이스 함수
+__device__ float GetBilinearSample(float* d_sinogram, float u, int thetaIdx, int width, int height) {
+    // 1. u 좌표 Clamping (디텍터 범위를 벗어나지 않게)
+    // u는 0.0 ~ (height-1) 범위여야 합니다.
+    if (u < 0.0f) u = 0.0f;
+    if (u >= height - 1.0f) u = height - 1.0f;
+
+    // 2. 인접한 정수 좌표 구하기
+    int i0 = (int)u;
+    int i1 = i0 + 1;
+
+    // 3. 보간 가중치(fraction) 계산
+    float weight = u - i0;
+
+    // 4. 해당 각도(thetaIdx)의 시작 메모리 주소 계산
+    // sinogram은 [각도 x 디텍터] 순서로 배치되어 있다고 가정합니다.
+    float* rowPtr = d_sinogram + (thetaIdx * height);
+
+    // 5. 이선형 보간 수행 (1D 이므로 실제로는 선형 보간)
+    // v0: i0번째 픽셀값, v1: i1번째 픽셀값
+    float v0 = rowPtr[i0];
+    float v1 = rowPtr[i1];
+
+    return (1.0f - weight) * v0 + weight * v1;
+}
+
+
 // 1. GPU 내부에서 사용할 Ram-Lak 필터 생성 및 주파수 곱셈 커널
 __global__ void ApplyRamLakFilterKernel(cufftComplex* d_complexSinogram, int width, int height) {
     int x = blockIdx.x * blockDim.x + threadIdx.x; // 각도 인덱스 (0 ~ 359)
@@ -51,6 +79,41 @@ __global__ void ConvertComplexToFloat(cufftComplex* d_in, float* d_out, int size
     // FFT -> IFFT를 거치면 데이터가 N(데이터 개수)만큼 스케일업 되므로 N으로 나누어 보정
     d_out[idx] = d_in[idx].x / (float)FFT_N;
 }
+
+// 4. Back Projection Kernel : 360도 각도를 순회하며, 각 각도마다 계산된 u 위치의 값을 가져와 누적 하는 함수
+__global__ void BackProjectionKernel(float* d_sinogram, float* d_volume, int width, int height, int volSize) {
+    // 1. 각 스레드가 담당할 3D Voxel 인덱스 계산
+    int x = blockIdx.x * blockDim.x + threadIdx.x;
+    int y = blockIdx.y * blockDim.y + threadIdx.y;
+    int z = blockIdx.z * blockDim.z + threadIdx.z;
+
+    if (x >= volSize || y >= volSize || z >= volSize) return;
+
+    // 2. Voxel의 중심 좌표를 (-1.0 ~ 1.0) 사이로 정규화 (보통 재구성 영역을 이렇게 잡습니다)
+    float fx = (x - volSize / 2.0f) / (volSize / 2.0f);
+    float fy = (y - volSize / 2.0f) / (volSize / 2.0f);
+
+    float sum = 0.0f;
+
+    // 3. 360개 각도를 순회하며 투영 데이터 누적 (Back-projection)
+    for (int thetaIdx = 0; thetaIdx < width; thetaIdx++) {
+        float theta = (float)thetaIdx * (PI / width);
+
+        // 투영 공식 (u = x*cos + y*sin)
+        float u = fx * cosf(theta) + fy * sinf(theta);
+
+        // 디텍터 픽셀 인덱스로 변환 (가로 400픽셀 기준)
+        float u_pixel = (u + 1.0f) * (height / 2.0f);
+
+        // [핵심] u_pixel 위치의 데이터를 가져옴 (여기서 Bilinear Interpolation 필요)
+        sum += GetBilinearSample(d_sinogram, u_pixel, thetaIdx, width, height);
+    }
+
+    // 4. 결과를 3D 볼륨 배열에 저장
+    d_volume[z * volSize * volSize + y * volSize + x] = sum;
+}
+
+
 
 extern "C" __declspec(dllexport) void ProcessSinogram(float* sinogramData, int width, int height) {
     if (sinogramData == nullptr) return;
@@ -122,4 +185,36 @@ extern "C" __declspec(dllexport) void ProcessSinogram(float* sinogramData, int w
     cufftDestroy(plan);
     cudaFree(d_inputRaw);
     cudaFree(d_complexData);
+}
+
+extern "C" __declspec(dllexport) void BackProjection(float* h_sinogram, float* h_volume, int volSize, int angles, int detectorWidth)
+{
+
+    size_t sinoBytes = (size_t)angles * detectorWidth * sizeof(float);
+    size_t volBytes = (size_t)volSize * volSize * volSize * sizeof(float);
+
+    float* d_sinogram, * d_volume;
+    cudaMalloc((void**)&d_sinogram, sinoBytes);
+    cudaMalloc((void**)&d_volume, volBytes);
+
+    // 1. [핵심] CPU(h_sinogram)에서 GPU(d_sinogram)로 데이터 복사!
+    cudaMemcpy(d_sinogram, h_sinogram, sinoBytes, cudaMemcpyHostToDevice);
+    cudaMemset(d_volume, 0, volBytes);
+
+
+    // 3D Grid 차원 설정 (GPU 스레드 체계)
+    dim3 block(8, 8, 8);
+    dim3 grid((volSize + block.x - 1) / block.x,
+        (volSize + block.y - 1) / block.y,
+        (volSize + block.z - 1) / block.z);
+
+    cudaMemset(d_volume, 0, volSize * volSize * volSize * sizeof(float));
+
+    BackProjectionKernel << <grid, block >> > (d_sinogram, d_volume, angles, detectorWidth, volSize);
+
+    cudaDeviceSynchronize();
+
+    cudaMemcpy(h_volume, d_volume, volSize * volSize * volSize * sizeof(float), cudaMemcpyDeviceToHost);
+
+    cudaFree(d_volume);
 }

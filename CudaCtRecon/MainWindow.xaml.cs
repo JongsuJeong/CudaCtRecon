@@ -15,6 +15,10 @@ namespace CudaCtRecon
         [DllImport("CppCudaEngine.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void ProcessSinogram(float[] sinogramData, int width, int height);
 
+        // DLL 호출 선언 추가 (기존 ProcessSinogram 아래에 붙이세요)
+        [DllImport("CppCudaEngine.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void BackProjection(float[] sinogramData, float[] volumeData, int volSize, int angles, int detectorWidth);
+
         public MainWindow()
         {
             InitializeComponent();
@@ -56,6 +60,16 @@ namespace CudaCtRecon
 
                 // [Step 5] 필터링이 완료된 결과 시각화
                 DrawFloatArrayToImage(sinogramData, width, height, Image_Filtered, "Filtered");
+
+                // --- [Step 6] 3D Back-Projection 추가 ---
+                int volSize = 256; // 우리가 만들 볼륨 크기
+                float[] volumeData = new float[volSize * volSize * volSize];
+
+                // 이제 CUDA 엔진에게 필터링된 데이터(sinogramData)를 던져서 3D(volumeData)로 재구성합니다.
+                BackProjection(sinogramData, volumeData, volSize, height, width);
+
+                // [Step 7] 결과 시각화 (Z축 중간 단면인 128번 슬라이스를 추출하여 시각화)
+                VisualizeSlice(volumeData, volSize, volSize / 2);
             }
             catch (Exception ex)
             {
@@ -72,30 +86,23 @@ namespace CudaCtRecon
         {
             byte[] pixels = new byte[width * height];
 
-            // 데이터 특성에 따른 디스플레이 레인지 고정
-            float fixedMin = 0.0f;
-            float fixedMax = 1.0f;
-
-            if (type == "Original")
-            {
-                fixedMin = 0.0f;
-                fixedMax = 200.0f; // 원본은 0~200 사이 분포
-            }
-            else if (type == "Filtered")
-            {
-                fixedMin = 0.0f;
-                fixedMax = 2.0f;   // 엣지만 남은 필터 데이터는 값이 작음
-            }
-
-            float range = fixedMax - fixedMin;
-            if (range == 0) range = 1.0f;
+            // [핵심] 데이터의 통계치를 기반으로 동적 정규화
+            float min = data.Min();
+            float max = data.Max();
+            float range = max - min;
+            if (range <= 0.0001f) range = 1.0f; // 0 나누기 방지
 
             for (int i = 0; i < data.Length; i++)
             {
                 float val = data[i];
-                if (type == "Filtered") val = Math.Abs(val); // 필터 결과는 절대값 처리
 
-                float normalized = (val - fixedMin) / range;
+                // 필터링된 데이터만 절대값 처리 (다른 데이터는 그대로)
+                if (type == "Filtered") val = Math.Abs(val);
+
+                // 동적 정규화
+                float normalized = (val - min) / range;
+
+                // 0~255 스케일링
                 int bVal = (int)(normalized * 255.0f);
                 pixels[i] = (byte)Math.Max(0, Math.Min(255, bVal));
             }
@@ -122,6 +129,17 @@ namespace CudaCtRecon
             WriteableBitmap wb = new WriteableBitmap(N, 1, 96, 96, PixelFormats.Gray8, null);
             wb.WritePixels(new Int32Rect(0, 0, N, 1), pixels, N, 0);
             targetControl.Source = wb;
+        }
+
+        private void VisualizeSlice(float[] volumeData, int volSize, int sliceZ)
+        {
+            // 256x256 슬라이스 추출
+            float[] slice = new float[volSize * volSize];
+            int offset = sliceZ * (volSize * volSize);
+            Array.Copy(volumeData, offset, slice, 0, slice.Length);
+
+            // Image_Reconstruction이라는 이름의 Image 컨트롤이 XAML에 있다고 가정합니다.
+            DrawFloatArrayToImage(slice, volSize, volSize, Image_Reconstruction, "Reconstruction");
         }
     }
 }
