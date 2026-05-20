@@ -29,10 +29,10 @@
 - [x] 메모리 누수 방지(`cudaFree`, `cufftDestroy`) 및 C# WPF 3단 필터링 시각화 UI 구축
 
 ### 💎 [Day 3] 코어 엔진 구현 (Back-Projection) - `진행 예정`
-- [ ] 3D Voxel (x,y,z) ➔ 2D Sensor (u,v) 기하학적 역산(Geometry) 수식 모델링
-- [ ] 1 스레드 = 1 Voxel 매핑을 위한 Grid/Block 차원 동적 할당
-- [ ] Bilinear Interpolation(쌍선형 보간법)을 적용한 누적 연산 커널 최적화
-- [ ] 렌더링 완료된 3D Volume 배열 C# 메모리 회수 및 Z축 중간 단면(Center Slice) 추출 검증
+- [x] 3D Voxel (x,y,z) ➔ 2D Sensor (u,v) 기하학적 역산(Geometry) 수식 모델링
+- [x] 1 스레드 = 1 Voxel 매핑을 위한 Grid/Block 차원 동적 할당
+- [x] Bilinear Interpolation(쌍선형 보간법)을 적용한 누적 연산 커널 최적화
+- [x] 렌더링 완료된 3D Volume 배열 C# 메모리 회수 및 Z축 중간 단면(Center Slice) 추출 검증
 
 ### 🚀 [Day 4] 최적화 및 UI/포트폴리오 마무리 - `진행 예정`
 - [ ] 2D 투영 데이터 고속 캐싱을 위한 CUDA Texture Memory 적용 및 벤치마크
