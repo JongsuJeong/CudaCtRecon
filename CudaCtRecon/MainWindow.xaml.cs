@@ -19,6 +19,14 @@ namespace CudaCtRecon
         [DllImport("CppCudaEngine.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void BackProjection(float[] sinogramData, float[] volumeData, int volSize, int angles, int detectorWidth);
 
+
+
+        // 전역 변수로 볼륨 데이터를 저장해둬야 슬라이더가 참조할 수 있습니다.
+        private float[] _currentVolumeData;
+
+        private int _volSize = 256;
+
+
         public MainWindow()
         {
             InitializeComponent();
@@ -70,6 +78,10 @@ namespace CudaCtRecon
 
                 // [Step 7] 결과 시각화 (Z축 중간 단면인 128번 슬라이스를 추출하여 시각화)
                 VisualizeSlice(volumeData, volSize, volSize / 2);
+
+
+                _currentVolumeData = volumeData;
+                Slider_ZSlice.Maximum = _volSize - 1; // 볼륨 크기에 맞춰 슬라이더 범위 자동 조정
             }
             catch (Exception ex)
             {
@@ -140,6 +152,32 @@ namespace CudaCtRecon
 
             // Image_Reconstruction이라는 이름의 Image 컨트롤이 XAML에 있다고 가정합니다.
             DrawFloatArrayToImage(slice, volSize, volSize, Image_Reconstruction, "Reconstruction");
+        }
+
+
+
+        private void Slider_ZSlice_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_currentVolumeData == null) return;
+
+            int sliceZ = (int)Slider_ZSlice.Value;
+            Txt_SliceIndex.Text = $"Slice: {sliceZ}";
+
+            // 해당 Z 인덱스의 단면만 추출하여 렌더링
+            VisualizeSlice(_currentVolumeData, _volSize, sliceZ);
+        }
+
+        private void btn_SaveSlice_Click(object sender, RoutedEventArgs e)
+        {
+            // 현재 화면에 보이는 WriteableBitmap을 PNG로 저장
+            var encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create((BitmapSource)Image_Reconstruction.Source));
+
+            using (var fileStream = new FileStream("Reconstructed_Slice.png", FileMode.Create))
+            {
+                encoder.Save(fileStream);
+            }
+            MessageBox.Show("단면이 저장되었습니다!");
         }
     }
 }

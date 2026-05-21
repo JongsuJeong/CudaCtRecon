@@ -44,6 +44,12 @@
                 </Border>
             </StackPanel>
 
+            <StackPanel Grid.Column="6" Margin="0,10,0,0">
+                <TextBlock x:Name="Txt_SliceIndex" Text="Slice: 128" FontWeight="Bold" HorizontalAlignment="Center"/>
+                <Slider x:Name="Slider_ZSlice" Minimum="0" Maximum="255" Value="128" 
+            ValueChanged="Slider_ZSlice_ValueChanged" TickFrequency="1" IsSnapToTickEnabled="True"/>
+            </StackPanel>
+
             <TextBlock Grid.Column="1" Text="▶" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             <TextBlock Grid.Column="3" Text="▶" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             <TextBlock Grid.Column="5" Text="▶" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center"/>
