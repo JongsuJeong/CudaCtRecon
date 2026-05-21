@@ -28,17 +28,17 @@
 - [x] 1D FFT ➔ Filter Convolution ➔ IFFT 파이프라인 커널 작성
 - [x] 메모리 누수 방지(`cudaFree`, `cufftDestroy`) 및 C# WPF 3단 필터링 시각화 UI 구축
 
-### 💎 [Day 3] 코어 엔진 구현 (Back-Projection) - `진행 예정`
+### 💎 [Day 3] 코어 엔진 구현 (Back-Projection) - `완료`
 - [x] 3D Voxel (x,y,z) ➔ 2D Sensor (u,v) 기하학적 역산(Geometry) 수식 모델링
 - [x] 1 스레드 = 1 Voxel 매핑을 위한 Grid/Block 차원 동적 할당
 - [x] Bilinear Interpolation(쌍선형 보간법)을 적용한 누적 연산 커널 최적화
 - [x] 렌더링 완료된 3D Volume 배열 C# 메모리 회수 및 Z축 중간 단면(Center Slice) 추출 검증
 
-### 🚀 [Day 4] 최적화 및 UI/포트폴리오 마무리 - `진행 예정`
+### 🚀 [Day 4] 최적화 및 UI/포트폴리오 마무리 - `마무리`
 - [ ] 2D 투영 데이터 고속 캐싱을 위한 CUDA Texture Memory 적용 및 벤치마크
-- [ ] Z축 스크롤링이 가능한 C# 실시간 단면 뷰어(Slider UI) 제작
+- [X] Z축 스크롤링이 가능한 C# 실시간 단면 뷰어(Slider UI) 제작
 - [ ] CPU vs GPU 연산 처리 시간 벤치마크 프로파일링 비교표 도출
-- [ ] 전체 코드 리팩토링 및 3D Volume Raw/mhd Export 기능 구현
+- [X] 전체 코드 리팩토링 및 3D Volume Raw/mhd Export 기능 구현
 
 ---
 *Last Updated: 2026-05-19*
